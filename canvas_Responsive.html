@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./reset.css">
+    <title>canvas Drawing app</title>
+
+    <style>
+
+        #container{
+           width: 100%;
+           display: flex;
+           flex-direction: column;
+           justify-content: center;
+           align-items: center;
+        }
+
+        #toolbar {
+            width: 100%;
+            height: 70px;
+            background-color: #131313;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 20px;
+            padding: 0 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        #toolbar div *{
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        #toolbar button {
+            border: none;
+            background-color: rgb(204, 40, 11);
+            color: white;
+            padding: 5px 15px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+
+        #toolbar #download{
+            border: none;
+            background-color: rgb(255, 255, 255);
+            color: rgb(0, 0, 0);
+            padding: 5px 15px;
+            border-radius: 10px;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        #toolbar #download:hover {
+            background-color: rgb(216, 80, 91);
+            color: rgb(255, 255, 255);
+        }
+
+        #toolbar #pencil {
+            border: none;
+            background-color: #cf2a15;
+            color: #ffffff;
+            padding: 5px 15px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        #toolbar #eraser {
+            border: none;
+            background-color: rgb(129, 129, 129);
+            color: white;
+            padding: 5px 15px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            #toolbar {
+                height: auto;
+                flex-direction: column; 
+                padding: 10px;
+                gap: 10px;
+            }
+
+            #toolbar div {
+                justify-content: center;
+                flex-wrap: wrap; 
+                gap: 5px;
+            }
+
+            #toolbar div * {
+                margin-right: 5px;
+                font-size: 13px; 
+            }
+
+            .toolbar-right {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            #toolbar button {
+                padding: 6px 12px; 
+                font-size: 13px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <div id="toolbar">
+            <div>
+                <label for="strokeColor">색상</label>
+                <input type="color" id="strokeColor" value="#000"/>
+
+                <label for="lwidth">선굵기</label>
+                <input type="number" id="lwidth" value="3" min="1" max="50"/>
+
+                <label for="backcolor">배경색</label>
+                <input type="color" id="backcolor" value="#fff" title="배경색을 변경하면 캔버스가 초기화됩니다!"/>
+
+            </div>
+
+            <div class="toolbar-right">
+            <button id="pencil" title="일반 펜 모드로 전환하여 그림을 그립니다.">연필</button>
+            <button id="eraser" title="배경색과 같은 색으로 부분 수정이 가능합니다.">지우개</button>
+            <button id="reset" title="캔버스의 모든 내용을 깨끗하게 지웁니다.">전체 지우기</button>
+            <button id="download" title="현재 그린 그림을 PNG 파일로 저장합니다.">이미지 다운로드</button>
+        </div>
+
+
+        </div>
+
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.querySelector("canvas")
+        const toolbar = document.getElementById("toolbar")
+        const downloadBtn = document.getElementById("download");
+
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight -toolbar.offsetHeight;
+
+        let canvasOffsetX = canvas.offsetLeft
+        let canvasOffsetY = canvas.offsetTop
+
+        let isDrawing = false;
+
+        let startX;
+        let startY;
+        let lineWidth = 2;
+
+        const ctx = canvas.getContext("2d")
+
+        // 선색상, 선굵기 변경 이벤트
+        toolbar.addEventListener("change", function(e){
+        if(e.target.id === "strokeColor"){
+            ctx.strokeStyle = e.target.value
+        }
+
+        if(e.target.id === 'lwidth'){
+            lineWidth = e.target.value
+        }
+
+        if(e.target.id === "backcolor"){
+            ctx.fillStyle = e.target.value;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 지우개용 설정
+        if (e.target.id === "strokeColor") {
+        isEraser = false;
+        ctx.strokeStyle = e.target.value;
+    }
+
+        // 지금 지우개 모드라면 펜 굵기가 지우개 크기를 침범하지 못하게 막아라
+         if (e.target.id === 'lwidth') {
+        lineWidth = e.target.value;
+        if (!isEraser) ctx.lineWidth = lineWidth;
+    }
+    })
+
+
+        // 캔버스에 그리기
+        canvas.addEventListener("mousedown", function(e){
+            isDrawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - canvasOffsetX, e.clientY - canvasOffsetY);
+    })
+
+         canvas.addEventListener("mousemove", function(e){
+            if(!isDrawing) return
+            ctx.lineWidth = lineWidth
+            ctx.lineCap = 'round'
+            ctx.lineJoin = 'round'
+            ctx.lineTo(e.clientX - canvasOffsetX, e.clientY - canvasOffsetY);
+            ctx.stroke()
+        })
+
+        canvas.addEventListener("mouseup", function(e){
+        isDrawing = false;
+    });
+
+         canvas.addEventListener("mouseleave", function(){
+        isDrawing = false;
+    });
+
+
+        // 전체 지우기
+        toolbar.addEventListener("click", function(e) {
+        if (e.target.id === "reset") {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 다운로드 하기
+        if (e.target.id === "download") {
+        let link = document.createElement("a");
+        link.download = "image.png";
+        link.href = canvas.toDataURL("image/png")
+        link.click();
+        }
+
+        // 지우개
+        if (e.target.id === "eraser") {
+        isEraser = true;
+        ctx.strokeStyle = document.getElementById("backcolor").value;
+        ctx.lineWidth = lineWidth * 3; 
+    }
+
+        // 다시 연필
+        if (e.target.id === "pencil") {
+        isEraser = false;
+        ctx.strokeStyle = document.getElementById("strokeColor").value;
+        ctx.lineWidth = document.getElementById("lwidth").value;
+    }
+
+    });
+
+    // 모바일 터치(Touch) 이벤트 추가 
+
+        canvas.addEventListener("touchstart", function(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            
+            let touch = e.touches[0];
+            ctx.moveTo(touch.clientX - canvasOffsetX, touch.clientY - canvasOffsetY);
+            
+            e.preventDefault(); 
+        }, { passive: false });
+
+  
+        canvas.addEventListener("touchmove", function(e) {
+            if (!isDrawing) return;
+            
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            let touch = e.touches[0];
+            ctx.lineTo(touch.clientX - canvasOffsetX, touch.clientY - canvasOffsetY);
+            ctx.stroke();
+            
+            e.preventDefault();
+        }, { passive: false });
+
+       
+        canvas.addEventListener("touchend", function() {
+            isDrawing = false;
+        });
+    
+    </script>
+
+  </body>
+</html>
