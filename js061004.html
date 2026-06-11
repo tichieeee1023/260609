@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>캔버스 애니메이션 - 밤하늘 비눗방울</title>
+    <style>
+        body {
+            padding:0;
+            margin:0;
+           
+        }
+        canvas {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            display: block;
+            background-image: linear-gradient(to bottom, #0f0c1b, #24243e);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="aquarium"></canvas>
+
+
+    <script>
+        const canvas = document.querySelector("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let bubbles = [];
+        for(let i = 0; i < 30; i++) {
+            let randomHue = Math.random() * 360;
+
+            bubbles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                r: Math.random() * 80 + 50,
+                speedX: -1.5 + Math.random() * 3.5,
+                speedY: -1.5 + Math.random() * 3.5,
+                color: `hsla(${randomHue}, 75%, 70%, 0.55)`,
+                shadowColor: `hsla(${randomHue}, 100%, 80%, 0.7)`
+            });
+        }
+
+        function ani() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for(let i = 0; i < bubbles.length; i++) {
+                let bubble = bubbles[i];
+                
+                // 좌표 이동
+                bubble.x += bubble.speedX;
+                bubble.y += bubble.speedY;
+            
+                if(bubble.x + bubble.r > canvas.width || bubble.x - bubble.r < 0) {
+                    bubble.speedX *= -1;
+                }
+                if(bubble.y + bubble.r > canvas.height || bubble.y - bubble.r < 0) {
+                    bubble.speedY *= -1;
+                }
+
+                let raG = ctx.createRadialGradient(
+                    bubble.x - bubble.r/3, bubble.y - bubble.r/3, bubble.r * 0.05, 
+                    bubble.x, bubble.y, bubble.r
+                );
+
+                raG.addColorStop(0, "rgba(255, 255, 255, 0.15)");
+                raG.addColorStop(0.4, "rgba(255, 255, 255, 0.05)");
+                raG.addColorStop(1, bubble.color);
+
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                ctx.shadowColor = bubble.shadowColor; 
+
+                ctx.beginPath();
+                ctx.arc(bubble.x, bubble.y, bubble.r, 0, Math.PI * 2);
+                ctx.fillStyle = raG;
+                ctx.fill();
+            }
+
+            ctx.shadowColor = "transparent";
+
+            requestAnimationFrame(ani);
+        }
+
+        ani();
+    </script>
+    
+</body>
+</html>
